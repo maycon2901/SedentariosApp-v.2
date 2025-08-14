@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Button,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { useApp } from './App';
 
@@ -14,36 +15,124 @@ export default function CalculationScreen() {
   const total = cadastros.length;
 
   const [valor, setValor] = React.useState('1');
+  const [pagos, setPagos] = useState({});
+  const [bloqueadosIds, setBloqueadosIds] = useState(new Set());
 
   const resultado = total && valor ? (total / parseFloat(valor)).toFixed(2) : 0;
 
+  // Alterna pago / não pago para um id
+  const togglePago = (id) => {
+    setPagos((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  // Move item de proxima para bloqueados (add id a set bloqueados)
+  const bloquearNome = (id) => {
+    setBloqueadosIds((prev) => new Set(prev).add(id));
+    // Remove da lista proxima mantendo ordem dos demais
+    setProxima((prev) => {
+      const novaLista = prev.filter((item) => item.id !== id);
+      return novaLista;
+    });
+  };
+
+  // Remove bloqueio: move item de bloqueados para o final da lista proxima
+  const desbloquearNome = (id) => {
+    setBloqueadosIds((prev) => {
+      const novoSet = new Set(prev);
+      novoSet.delete(id);
+      return novoSet;
+    });
+    // Adiciona item bloqueado ao final da lista proxima
+    const itemBloqueado = cadastros.find((c) => c.id === id);
+    if (itemBloqueado) {
+      setProxima((prev) => [...prev, itemBloqueado]);
+    }
+  };
+
+  // Função para definir cor de fundo por grupo de 5
+  const backgroundColorByGroup = (index) => {
+    const group = Math.floor(index / 5);
+    return group % 2 === 0 ? '#78a07aff' : '#856565ff';
+  };
+
+  // Itens bloqueados como objetos (filtra cadastros que estão bloqueados)
+  const bloqueados = cadastros.filter((c) => bloqueadosIds.has(c.id));
+
   return (
     <View style={styles.container}>
-      {/* <Text style={styles.title}>Cálculo</Text>
-
-      <Text style={styles.text}>Total de nomes: {total}</Text>
-
-      <View style={styles.inputRow}>
-        <Text style={styles.text}>Dividir por:</Text>
-        <Text style={styles.valor}>{valor}</Text>
-      </View>
-
-      <Text style={styles.text}>Resultado: {resultado}</Text> */}
-
       <Text style={styles.title}>Proxima</Text>
 
       <FlatList
         data={proxima}
         keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
-          <View style={styles.item}>
-            <Text style={styles.text}>
-              {index + 1} - {item.nome}
-            </Text>
-            <Text style={styles.text}>⚽ {item.gols}</Text>
-            {/* <Text style={styles.text}>Categoria: {item.categoria}</Text> */}
-          </View>
-        )}
+        renderItem={({ item, index }) => {
+          const pago = pagos[item.id] || false;
+          return (
+            <View
+              style={[
+                styles.item,
+                { backgroundColor: backgroundColorByGroup(index) },
+              ]}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.text}>{item.nome}</Text>
+                <Text style={styles.text}>⚽ {item.gols}</Text>
+              </View>
+
+              {/* Botão Pago / Não pago */}
+              <Button
+                title={pago ? 'Pago' : 'Não pago'}
+                color={pago ? 'green' : 'red'}
+                onPress={() => togglePago(item.id)}
+              />
+
+              {/* Botão bloquear - preto */}
+              <TouchableOpacity
+                onPress={() => bloquearNome(item.id)}
+                style={styles.botaoBloquear}
+              >
+                <Text style={{ color: 'white' }}>Bloquear</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        }}
+      />
+
+      <Text style={[styles.title, { marginTop: 30 }]}>Bloqueados</Text>
+
+      <FlatList
+        data={bloqueados}
+        keyExtractor={(item) => item.id}
+        style={{ maxHeight: 200 }}
+        renderItem={({ item }) => {
+          const pago = pagos[item.id] || false;
+          return (
+            <View style={[styles.item, { backgroundColor: '#444' }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.text, { color: 'white' }]}>{item.nome}</Text>
+                <Text style={[styles.text, { color: 'white' }]}>⚽ {item.gols}</Text>
+              </View>
+
+              {/* Botão Pago / Não pago */}
+              <Button
+                title={pago ? 'Pago' : 'Não pago'}
+                color={pago ? 'green' : 'red'}
+                onPress={() => togglePago(item.id)}
+              />
+
+              {/* Botão desbloquear */}
+              <TouchableOpacity
+                onPress={() => desbloquearNome(item.id)}
+                style={[styles.botaoBloquear, { backgroundColor: '#222' }]}
+              >
+                <Text style={{ color: 'white' }}>Desbloquear</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        }}
       />
 
       <View style={{ marginTop: 20 }}>
@@ -84,19 +173,20 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 13,
   },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 10,
-  },
-  valor: {
-    fontSize: 16,
-    marginLeft: 10,
-  },
   item: {
-    backgroundColor: '#eee',
     padding: 10,
     borderRadius: 5,
     marginVertical: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  botaoBloquear: {
+    backgroundColor: 'black',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 5,
+    marginLeft: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

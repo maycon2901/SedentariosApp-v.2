@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { distribuir } from './distribuir';
+import { distribuir } from './distribuir';  // import atualizado
 import {
   View,
   Text,
@@ -137,13 +137,22 @@ export default function SecondScreen() {
     setLoadingDistribuir10(true);
 
     setTimeout(() => {
+      // Pega os 10 primeiros da lista proxima
       const primeiros10 = proxima.slice(0, 10);
-      const { timeA: novoA, timeB: novoB, proxima: novaProxima } = distribuir(primeiros10);
+
+      // Extrai os IDs dos bloqueados (bloqueado === true)
+      const bloqueadosIds = primeiros10.filter(p => p.bloqueado).map(p => p.id);
+
+      // Distribui passando também os bloqueados para manter no proxima
+      const { timeA: novoA, timeB: novoB, proxima: novaProxima } = distribuir(primeiros10, bloqueadosIds);
 
       setTimeA(novoA);
       setTimeB(novoB);
 
+      // Restante da lista proxima (após os 10 primeiros)
       const restanteProxima = proxima.slice(10);
+
+      // Junta o restante da lista + novaProxima que já tem os bloqueados + não usados
       setProxima([...novaProxima, ...restanteProxima]);
 
       setLoadingDistribuir10(false);
@@ -168,22 +177,18 @@ export default function SecondScreen() {
             setLoadingDistribuir10(true);
 
             setTimeout(() => {
-              // Mover os 5 jogadores do time para o final da proxima
               const removidos = time.slice(0, 5);
               const novaProximaTemp = [...proxima, ...removidos];
 
-              // Verificar se agora há pelo menos 5 jogadores disponíveis para reposição
               if (novaProximaTemp.length < 5) {
                 setLoadingDistribuir10(false);
                 Alert.alert('Erro', 'Mesmo após mover, a tabela Próxima ainda não tem jogadores suficientes para reposição.');
                 return;
               }
 
-              // Pegar os 5 primeiros da nova lista proxima
               const novosDaProxima = novaProximaTemp.slice(0, 5);
               const restanteProxima = novaProximaTemp.slice(5);
 
-              // Atualizar os estados
               setProxima(restanteProxima);
               setTime(novosDaProxima);
 
@@ -196,10 +201,41 @@ export default function SecondScreen() {
     );
   };
 
+  // Função Mesclar Time - alterna jogadores entre A e B
+  const mesclarTimes = () => {
+  Alert.alert(
+    'Confirmar Mesclagem',
+    'Deseja realmente mesclar os times A e B alternadamente?',
+    [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Confirmar',
+        onPress: () => {
+          const jogadores = [...timeA.slice(0, 5), ...timeB.slice(0, 5)];
+          const novoTimeA = [];
+          const novoTimeB = [];
+
+          jogadores.forEach((jogador, i) => {
+            if (i % 2 === 0) {
+              novoTimeA.push(jogador);
+            } else {
+              novoTimeB.push(jogador);
+            }
+          });
+
+          setTimeA(novoTimeA);
+          setTimeB(novoTimeB);
+        },
+      },
+    ]
+  );
+};
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}></Text>
-      <FlatList style={styles.FlatListAzul}
+      <FlatList
+        style={styles.FlatListAzul}
         data={timeA}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => renderItem(item, timeA, setTimeA)}
@@ -212,7 +248,8 @@ export default function SecondScreen() {
       />
 
       <Text style={styles.title}></Text>
-      <FlatList style={styles.FlatListLaranja}
+      <FlatList
+        style={styles.FlatListLaranja}
         data={timeB}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => renderItem(item, timeB, setTimeB)}
@@ -221,6 +258,13 @@ export default function SecondScreen() {
         title="Time LARANJA Perdeu"
         color="#f59426d2"
         onPress={() => timePerdeu(timeB, setTimeB, 'Time B')}
+        disabled={loadingDistribuir10}
+      />
+
+      <Button
+        title="Mesclar time"
+        color="#800080"
+        onPress={mesclarTimes}
         disabled={loadingDistribuir10}
       />
 
@@ -252,10 +296,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#808080',
   },
   FlatListAzul: {
-    backgroundColor: '#0000ff'
+    backgroundColor: '#0000ff',
   },
   FlatListLaranja: {
-    backgroundColor: '#ffa500'
+    backgroundColor: '#ffa500',
   },
   title: {
     fontSize: 18,

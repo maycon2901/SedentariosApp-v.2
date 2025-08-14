@@ -161,7 +161,7 @@ function MainScreen() {
       <TouchableOpacity onPress={() => iniciarEdicao(item)} style={styles.item}>
         <View style={{ flex: 1 }}>
           <Text style={styles.text}>{item.nome}</Text>
-          <Text style={styles.text}>⚽ {item.gols || 0}</Text>
+          <Text style={styles.text}>⚽ {item.gols || '0'}</Text>
         </View>
         <Button
           title={ativado ? 'Desativar' : 'Ativar'}
@@ -185,7 +185,7 @@ function MainScreen() {
         <Text>⚽</Text>
         <TextInput
           style={styles.inputGols}
-          placeholder="0"
+          placeholder="Gols"
           value={gols}
           onChangeText={setGols}
           keyboardType="numeric"
