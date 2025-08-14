@@ -53,6 +53,23 @@ export default function SecondScreen() {
     );
   };
 
+  const decrementarGols = (item, origem, setOrigem) => {
+  const novoCadastros = cadastros.map((c) =>
+    c.id === item.id
+      ? { ...c, gols: Math.max((parseInt(c.gols) || 0) - 1, 0) } // não deixa negativo
+      : c
+  );
+  setCadastros(novoCadastros);
+
+  setOrigem((prev) =>
+    prev.map((c) =>
+      c.id === item.id
+        ? { ...c, gols: Math.max((parseInt(c.gols) || 0) - 1, 0) }
+        : c
+    )
+  );
+};
+
   const renderItem = (item, origem, setOrigem) => {
     const scale = new Animated.Value(1);
 
@@ -77,11 +94,14 @@ export default function SecondScreen() {
           <Text style={styles.text}>{item.nome}</Text>
           <Text style={styles.text}>⚽ {item.gols}</Text>
         </View>
-        <TouchableOpacity onPress={pulse}>
-          <Animated.View style={{ transform: [{ scale }] }}>
-            <Text style={styles.icon}>⚽</Text>
-          </Animated.View>
-        </TouchableOpacity>
+        <TouchableOpacity 
+  onPress={pulse} 
+  onLongPress={() => decrementarGols(item, origem, setOrigem)}
+>
+  <Animated.View style={{ transform: [{ scale }] }}>
+    <Text style={styles.icon}>⚽</Text>
+  </Animated.View>
+</TouchableOpacity>
         <TouchableOpacity
           style={styles.subIcon}
           onPress={() => substituirJogador(item, origem, setOrigem)}
