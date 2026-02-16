@@ -10,8 +10,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff",
-       "sdkVersion": "51.0.0"
+      "backgroundColor": "#ffffff"
     },
     "ios": {
       "supportsTablet": true
@@ -29,14 +28,17 @@
     },
     "extra": {
       "eas": {
-        "projectId": "eb3f92ea-c53f-491f-a009-216c8f5575c8"
+        "projectId": "a81cdbdf-f413-4a06-bcc9-e69cf5e93650"
       }
     },
-  "updates": { 
-    "enabled": true,
-    "checkAutomatically": "ON_LOAD",
-    "fallbackToCocheTimeout": 0
-
-  }
+    "updates": {
+      "enabled": false,
+      "checkAutomatically": "NEVER",
+      "fallbackToCocheTimeout": 0
+    },
+    "plugins": [
+      "expo-asset",
+      "expo-font"
+    ]
   }
 }

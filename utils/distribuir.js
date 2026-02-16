@@ -1,10 +1,14 @@
 // distribuir.js
-export const distribuir = (lista) => {
+export const distribuir = (lista, bloqueadosIds = []) => {
   const dezPrimeiros = lista.slice(0, 10);
   const restante = lista.slice(10);
 
+  // Separar bloqueados dos não bloqueados
+  const bloqueados = dezPrimeiros.filter(item => bloqueadosIds.includes(item.id));
+  const naoBloqueados = dezPrimeiros.filter(item => !bloqueadosIds.includes(item.id));
+
   const porCategoria = {};
-  dezPrimeiros.forEach((item) => {
+  naoBloqueados.forEach((item) => {
     if (!porCategoria[item.categoria]) porCategoria[item.categoria] = [];
     porCategoria[item.categoria].push(item);
   });
@@ -33,9 +37,11 @@ export const distribuir = (lista) => {
   const finalB = trimTime(timeB);
 
   const usados = finalA.concat(finalB);
-  const novaProxima = [...restante].filter(
+  // Manter bloqueados na lista proxima junto com o restante
+  const novaProxima = [...bloqueados, ...restante].filter(
     (item) => !usados.some((u) => u.id === item.id)
   );
 
   return { timeA: finalA, timeB: finalB, proxima: novaProxima };
 };
+
